@@ -1,4 +1,4 @@
-﻿public class Program
+public class Program
 {
     public static async Task Main()
     {
@@ -57,3 +57,4 @@
         await orchestrator.DispatchAsync(diwaliBatchEvent);
     }
 }
+
