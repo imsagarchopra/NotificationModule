@@ -1,0 +1,16 @@
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.GeneratedMSBuildEditorConfig.editorconfig
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.AssemblyInfoInputs.cache
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.AssemblyInfo.cs
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.csproj.CoreCompileInputs.cache
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.exe
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.deps.json
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.runtimeconfig.json
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.runtimeconfig.dev.json
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.dll
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\bin\Debug\net10.0\NotificationModule.pdb
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.dll
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\refint\NotificationModule.dll
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.pdb
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\NotificationModule.genruntimeconfig.cache
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\ref\NotificationModule.dll
+C:\ShaggyTestFolder\NotificationModule\NotificationModule\obj\Debug\net10.0\Notifica.8FFAD3E7.Up2Date
