@@ -3,7 +3,8 @@
 public record EnterpriseNotificationEvent(
     string EventId,
     string TemplateId,
-    string ChannelType, // "Email", "SMS"
+    //string ChannelType, // "Email", "SMS"
+    List<string> ChannelTypes, // e.g., ["Email", "SMS", "Push"]
     NotificationType NotificationType,
     NotificationPriority Priority,
     string TargetAudienceSegment, // e.g., "AllActiveUsers" or "SingleUser"

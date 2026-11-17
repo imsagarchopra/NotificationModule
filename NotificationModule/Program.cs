@@ -31,7 +31,7 @@ public class Program
         await kafkaBroker.PublishAsync(new EnterpriseNotificationEvent(
             EventId: "EVT-OTP-101",
             TemplateId: "otp-template",
-            ChannelType: "Email",
+            ChannelTypes: ["Email", "SMS"],
             NotificationType: NotificationType.Transactional,
             Priority: NotificationPriority.High,
             TargetAudienceSegment: "SingleUser",
@@ -49,7 +49,7 @@ public class Program
         await kafkaBroker.PublishAsync(new EnterpriseNotificationEvent(
             EventId: "EVT-DIWALI-2026",
             TemplateId: "diwali-sale-template",
-            ChannelType: "Email",
+            ChannelTypes: ["Email", "SMS"],
             NotificationType: NotificationType.Promotional,
             Priority: NotificationPriority.Low,
             TargetAudienceSegment: "AllActiveUsers",

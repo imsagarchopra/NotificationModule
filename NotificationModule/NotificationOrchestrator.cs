@@ -1,4 +1,3 @@
-// The Master Orchestrator (Executes Validation, Preferences, Templates, & Channels)
 public class NotificationOrchestrator : INotificationOrchestrator
 {
     private readonly Dictionary<string, INotificationChannel> _channels;
@@ -18,53 +17,53 @@ public class NotificationOrchestrator : INotificationOrchestrator
         _templateEngine = templateEngine;
     }
 
-    public async Task DispatchBatchAsync(EnterpriseNotificationEvent notificationEvent, List<RecipientInfo> batchRecipients, CancellationToken cancellationToken = default)
+    public async Task DispatchBatchAsync(
+        EnterpriseNotificationEvent notificationEvent, 
+        List<RecipientInfo> batchRecipients, 
+        CancellationToken cancellationToken = default)
     {
-        // 1. VALIDATION CHECK
+        // 1. Validation Check
         var validationResult = _validator.Validate(notificationEvent);
-        if (!validationResult.IsValid)
+        if (!validationResult.IsValid) return;
+
+        // 2. Loop through EACH requested channel in the list!
+        foreach (var channelType in notificationEvent.ChannelTypes)
         {
-            Console.WriteLine($"   ❌ [REJECTED BY VALIDATION] {validationResult.ErrorMessage}");
-            return;
-        }
-
-        // 2. USER PREFERENCE CHECK (Filter Opt-outs via Redis)
-        var allowedRecipients = await _preferenceService.FilterAllowedRecipientsAsync(
-            batchRecipients, 
-            notificationEvent.ChannelType, 
-            notificationEvent.NotificationType
-        );
-
-        if (!allowedRecipients.Any())
-        {
-            Console.WriteLine("   ⚠️ [ABORTED] All recipients in this batch opted out.");
-            return;
-        }
-
-        // 3. CHANNEL RESOLUTION
-        if (!_channels.TryGetValue(notificationEvent.ChannelType, out var channel))
-        {
-            throw new NotSupportedException($"Channel '{notificationEvent.ChannelType}' is not registered.");
-        }
-
-        // 4. TEMPLATE RENDERING
-        var (subject, body) = await _templateEngine.RenderAsync(notificationEvent.TemplateId, notificationEvent.PayloadTokens);
-
-        // 5. DISPATCH EXECUTION
-        if (notificationEvent.Priority == NotificationPriority.High)
-        {
-            // Transactional OTP: Send individually
-            foreach (var recipient in allowedRecipients)
+            if (!_channels.TryGetValue(channelType, out var channel))
             {
-                var message = new NotificationMessage(recipient.Address, subject, body);
-                await channel.SendAsync(message, cancellationToken);
+                Console.WriteLine($"   ⚠️ Channel '{channelType}' is not registered.");
+                continue;
             }
-        }
-        else
-        {
-            // Promotional Bulk: Send 1 Batch API call for the 5,000 users
-            var messages = allowedRecipients.Select(r => new NotificationMessage(r.Address, subject, body));
-            await channel.SendBatchAsync(messages, cancellationToken);
+
+            // 3. Filter preferences INDEPENDENTLY for this specific channel
+            var allowedRecipients = await _preferenceService.FilterAllowedRecipientsAsync(
+                batchRecipients, 
+                channelType, 
+                notificationEvent.NotificationType
+            );
+
+            if (!allowedRecipients.Any())
+            {
+                Console.WriteLine($"   [PREFERENCE] All users opted out of {channelType} for this campaign.");
+                continue;
+            }
+
+            // 4. Render Template
+            var (subject, body) = await _templateEngine.RenderAsync(notificationEvent.TemplateId, notificationEvent.PayloadTokens);
+
+            // 5. Dispatch via Channel Strategy
+            if (notificationEvent.Priority == NotificationPriority.High)
+            {
+                foreach (var recipient in allowedRecipients)
+                {
+                    await channel.SendAsync(new NotificationMessage(recipient.Address, subject, body), cancellationToken);
+                }
+            }
+            else
+            {
+                var messages = allowedRecipients.Select(r => new NotificationMessage(r.Address, subject, body));
+                await channel.SendBatchAsync(messages, cancellationToken);
+            }
         }
     }
 }
