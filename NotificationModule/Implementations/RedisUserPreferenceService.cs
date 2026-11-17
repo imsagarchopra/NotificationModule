@@ -1,28 +1,26 @@
-// STEP 6: User Preference Engine (Redis Simulation)
+// Redis Preference Engine
 public class RedisUserPreferenceService : IUserPreferenceService
 {
-    // Simulated Redis cache of opted-out users
-    private readonly HashSet<string> _optedOutUsers = new() { "user-2" }; // user-2 opted out of promo emails
+    // Simulating Redis set: user-2 and user-500 have opted out of promotional emails
+    private readonly HashSet<string> _optedOutUsers = new() { "user-2", "user-500" };
 
-    public async Task<List<RecipientInfo>> FilterAllowedRecipientsAsync(List<RecipientInfo> recipients, string channelType, NotificationType notificationType)
+    public Task<List<RecipientInfo>> FilterAllowedRecipientsAsync(List<RecipientInfo> recipients, string channelType, NotificationType notificationType)
     {
-        await Task.Yield(); // Simulate fast async O(1) Redis lookup
-
-        // Transactional OTPs bypass user preferences (Mandatory Security Alerts)
+        // Security Transactional OTPs bypass preference checks
         if (notificationType == NotificationType.Transactional)
         {
-            return recipients;
+            return Task.FromResult(recipients);
         }
 
-        // Filter out users who opted out of Promotional messages
-        var allowedRecipients = recipients.Where(r => !_optedOutUsers.Contains(r.UserId)).ToList();
+        // Filter out opted-out users via Redis set check O(1)
+        var allowed = recipients.Where(r => !_optedOutUsers.Contains(r.UserId)).ToList();
         
-        int droppedCount = recipients.Count - allowedRecipients.Count;
-        if (droppedCount > 0)
+        int filteredCount = recipients.Count - allowed.Count;
+        if (filteredCount > 0)
         {
-            Console.WriteLine($"   [PREFERENCE CHECK] Filtered out {droppedCount} opted-out user(s) via Redis cache.");
+            Console.WriteLine($"      [REDIS OPT-OUT] Filtered out {filteredCount} user(s) who opted out.");
         }
 
-        return allowedRecipients;
+        return Task.FromResult(allowed);
     }
 }

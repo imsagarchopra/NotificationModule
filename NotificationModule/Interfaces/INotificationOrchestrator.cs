@@ -1,4 +1,5 @@
+
 public interface INotificationOrchestrator
 {
-    Task DispatchAsync(NotificationEvent notificationEvent, CancellationToken cancellationToken = default);
+    Task DispatchBatchAsync(EnterpriseNotificationEvent notificationEvent, List<RecipientInfo> batchRecipients, CancellationToken cancellationToken = default);
 }

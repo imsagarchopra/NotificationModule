@@ -1,3 +1,4 @@
+// The Master Orchestrator (Executes Validation, Preferences, Templates, & Channels)
 public class NotificationOrchestrator : INotificationOrchestrator
 {
     private readonly Dictionary<string, INotificationChannel> _channels;
@@ -17,10 +18,8 @@ public class NotificationOrchestrator : INotificationOrchestrator
         _templateEngine = templateEngine;
     }
 
-    public async Task DispatchAsync(NotificationEvent notificationEvent, CancellationToken cancellationToken = default)
+    public async Task DispatchBatchAsync(EnterpriseNotificationEvent notificationEvent, List<RecipientInfo> batchRecipients, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"\n[ORCHESTRATOR] Received event '{notificationEvent.EventId}' for Channel: {notificationEvent.ChannelType}");
-
         // 1. VALIDATION CHECK
         var validationResult = _validator.Validate(notificationEvent);
         if (!validationResult.IsValid)
@@ -28,18 +27,17 @@ public class NotificationOrchestrator : INotificationOrchestrator
             Console.WriteLine($"   ❌ [REJECTED BY VALIDATION] {validationResult.ErrorMessage}");
             return;
         }
-        Console.WriteLine("   ✅ [VALIDATION PASSED]");
 
-        // 2. USER PREFERENCE CHECK (Filtering Opt-outs)
-        var validRecipients = await _preferenceService.FilterAllowedRecipientsAsync(
-            notificationEvent.Recipients, 
+        // 2. USER PREFERENCE CHECK (Filter Opt-outs via Redis)
+        var allowedRecipients = await _preferenceService.FilterAllowedRecipientsAsync(
+            batchRecipients, 
             notificationEvent.ChannelType, 
             notificationEvent.NotificationType
         );
 
-        if (!validRecipients.Any())
+        if (!allowedRecipients.Any())
         {
-            Console.WriteLine("   ⚠️ [ABORTED] All recipients in this batch have opted out.");
+            Console.WriteLine("   ⚠️ [ABORTED] All recipients in this batch opted out.");
             return;
         }
 
@@ -50,13 +48,13 @@ public class NotificationOrchestrator : INotificationOrchestrator
         }
 
         // 4. TEMPLATE RENDERING
-        (string subject, string body) = await _templateEngine.RenderAsync(notificationEvent.TemplateId, notificationEvent.PayloadTokens);
+        var (subject, body) = await _templateEngine.RenderAsync(notificationEvent.TemplateId, notificationEvent.PayloadTokens);
 
-        // 5. DISPATCH EXECUTION (Single vs. Batch)
+        // 5. DISPATCH EXECUTION
         if (notificationEvent.Priority == NotificationPriority.High)
         {
-            // Transactional / OTP Path
-            foreach (var recipient in validRecipients)
+            // Transactional OTP: Send individually
+            foreach (var recipient in allowedRecipients)
             {
                 var message = new NotificationMessage(recipient.Address, subject, body);
                 await channel.SendAsync(message, cancellationToken);
@@ -64,8 +62,8 @@ public class NotificationOrchestrator : INotificationOrchestrator
         }
         else
         {
-            // Promotional Bulk Batch Path
-            var messages = validRecipients.Select(r => new NotificationMessage(r.Address, subject, body));
+            // Promotional Bulk: Send 1 Batch API call for the 5,000 users
+            var messages = allowedRecipients.Select(r => new NotificationMessage(r.Address, subject, body));
             await channel.SendBatchAsync(messages, cancellationToken);
         }
     }
